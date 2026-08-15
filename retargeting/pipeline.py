@@ -203,8 +203,8 @@ def main(argv=None):
                         "omit if it sits next to this repo")
     r.add_argument("--out", required=True, help="output directory")
     r.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 4) - 2))
-    r.add_argument("--clips", default=os.path.join(CURATION, "clips_v8.txt"),
-                   help="source clip list to retarget (default: the exact v8 set). "
+    r.add_argument("--clips", default=os.path.join(CURATION, "clips.txt"),
+                   help="source clip list to retarget (default: the reference set). "
                         "Pass '' to select a fresh subset with --target_hours instead.")
     r.add_argument("--target_hours", type=float, default=4.5,
                    help="only used when --clips is empty")
@@ -220,7 +220,7 @@ def main(argv=None):
     r.add_argument("--dry-run", dest="dry_run", action="store_true",
                    help="print the stage commands without running them")
     r.add_argument("--verify", action="store_true",
-                   help="compare the result against curation/expected_v8.json")
+                   help="compare the result against curation/expected.json")
 
     a = ap.parse_args(argv)
     if not a.amass:
@@ -238,7 +238,7 @@ def main(argv=None):
             getattr(runner, f"stage_{name}")()
 
     if a.verify and not a.dry_run:
-        expected = os.path.join(CURATION, "expected_v8.json")
+        expected = os.path.join(CURATION, "expected.json")
         if os.path.exists(expected):
             return 0 if verify(runner, expected) else 1
     print(f"\ndone -> {a.out}")

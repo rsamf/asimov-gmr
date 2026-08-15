@@ -47,9 +47,8 @@ DATA_ROOT = ROBO
 # Per-clip performance of the trained policy (dropped in by the training run),
 # keyed by clip_name; joined into BOTH datasets so success/MPKPE are browsable
 # across the whole corpus.
-# Each dataset joins the CSV of the training run that consumed it (v2 clips ->
-# the v2-era run, v3 -> the v3 run), so succ/mpkpe always reflect the policy
-# actually trained on that data.
+# Each release joins the CSV of the training run that consumed it, so
+# succ/mpkpe always reflect the policy actually trained on that data.
 def _train_csv(env_var, name):
     """Env var wins; else first existing of repo root / _do_not_commit (the
     user archives past runs' CSVs there); else the root path (renders as —)."""
@@ -107,8 +106,8 @@ V2_COLS = [
      "than asimov has."),
     ("ankle", "ankle", "f1",
      "Ankle-roll saturation: % of frames with an ankle-roll joint at its limit. "
-     "Ankle roll is ±20° (0.35 rad) as of v7 — releases up to v6 were built "
-     "with a wrong ±5.7° limit, which made this the dominant hotspot there."),
+     "Ankle roll is ±20° (0.35 rad). An earlier robot spec listed ±5.7°, which "
+     "made this the dominant saturation hotspot until it was corrected."),
     ("pos_err", "pos err", "f1",
      "Mean IK tracking residual (cm) across all tracked robot bodies: distance "
      "from each body to its human target (the chord-synthesized targets the IK "
@@ -147,8 +146,7 @@ V2_COLS = [
      "A difficulty factor."),
     ("difficulty", "diff", "text",
      "easy / medium / hard — worst of five factors, each thresholded at cutoffs "
-     "frozen from the v7 corpus (p75/p95, re-frozen after the ankle-roll spec "
-     "fix): peak v >= 29.8/46.6 deg per frame, root v >= 1.32/2.54 m/s, "
+     "frozen from the reference corpus (p75/p95): peak v >= 29.8/46.6 deg per frame, root v >= 1.32/2.54 m/s, "
      "root av >= 211.3/466 deg/s, sat >= 14.2/15.9 %, tilt >= 28.7/48.7 deg. "
      "The factor(s) responsible are in the detail pane (driver)."),
     ("split", "split", "text",

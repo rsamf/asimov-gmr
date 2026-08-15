@@ -32,9 +32,9 @@ from scipy.spatial.transform import Rotation as Rot
 from retargeting.utils.clip_names import amass_clip_name
 
 # (medium_at, hard_at) per factor, value >= cutoff (inclusive).
-# FROZEN 2026-08-11 from tune_v7, ok-status non-glitch cohort (3420 clips),
+# FROZEN from the reference corpus, ok-status non-glitch cohort (3420 clips),
 # p75/p95 of each factor; five-factor split 26% easy / 54% medium / 20% hard.
-# Re-frozen from v5 because the ankle-roll spec correction (±0.1 -> ±0.35 rad)
+# Re-frozen after the ankle-roll spec correction (±0.1 -> ±0.35 rad), which
 # collapsed the saturation distribution (sat p75 17.4 -> 14.2) and the pelvis
 # 0.65 tuning shifted root_vel; joint_vel/root_ang/tilt barely moved. p75/p95
 # chosen over p60/p90 because worst-of collapses the easy bucket at p60.
@@ -176,7 +176,7 @@ def calibrate(factors):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("dataset", help="retargeted dataset dir (e.g. .../retargeted/tune_v5)")
+    ap.add_argument("dataset", help="retargeted dataset dir (the pkl tree)")
     ap.add_argument("--calibrate", action="store_true",
                     help="print suggested cutoffs from this dataset; write nothing")
     a = ap.parse_args()

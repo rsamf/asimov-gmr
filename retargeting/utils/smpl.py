@@ -22,8 +22,7 @@ from retargeting.utils.quat import quat_mul
 # it stamped 120, so every clip plays at exactly half speed. Verified
 # numerically 2026-08-12: ballistic pelvis windows fit apparent gravity
 # ~-1.4 m/s^2 (needs -9.81 at the claimed rate), expert arm peaks read 33%
-# BELOW lay throwers, walking cadence ~0.75 steps/s. Releases up to tune_v7
-# were built on the slow data.
+# BELOW lay throwers, and walking cadence reads ~0.75 steps/s.
 FRAMERATE_OVERRIDES = {
     "BMLhandball": 240.0,
 }

@@ -79,17 +79,17 @@ makes "the same results" checkable:
 
 | file | what it pins |
 |---|---|
-| `curation/clips_v8.txt` | the exact 3,388 source clips of the published release |
+| `curation/clips.txt` | the exact source clips of the reference release |
 | `curation/rejects.json` | every manually rejected clip |
 | `curation/test_split.json` | the frozen 60/60/60 held-out test set |
-| `curation/expected_v8.json` | the counts `--verify` checks against |
+| `curation/expected.json` | the counts `--verify` checks against |
 
 Frozen thresholds (difficulty cutoffs, glitch detector, fall check, framerate
 corrections) live in code with the measurement that set them. Re-run
 `--verify` and any drift means a different AMASS snapshot, a modified IK config,
 or an edited curation list — not luck.
 
-### The published release (v8)
+### The reference release
 
 | | |
 |---|---|
@@ -104,7 +104,9 @@ or an edited curation list — not luck.
 ## What this project adds
 
 Upstream GMR provides the mink/MuJoCo IK solver. This project turns it into a
-dataset pipeline for one robot.
+dataset pipeline for one robot. The long-form write-up — what was tried, what was
+measured, and what was rejected — is in
+[`docs/asimov_retargeting_report.md`](docs/asimov_retargeting_report.md).
 
 ### Retargeting fidelity
 
@@ -188,46 +190,6 @@ histogram-brush filters, multi-sort, shareable URL state, video playback, and a
 ![The clip explorer: per-clip IK quality, dynamics, difficulty and training feedback](docs/clip_explorer.png)
 
 ---
-
-## Deploying the explorer
-
-The explorer ships as a HuggingFace Docker Space, deployed by CI on every push
-to `main` (`.github/workflows/deploy-space.yml`; set the `HF_SPACE_REPO`
-repository variable and an `HF_TOKEN` secret).
-
-Because the clips derive from AMASS, the **app is public but the data is not**:
-the Space reads a private dataset repo using its own token.
-
-```bash
-# publish a release's metadata + review videos to a PRIVATE dataset repo
-python scripts/publish_dataset.py --root ./out --release v8 --repo <owner>/<name>
-```
-
-Then set `HF_DATASET_REPO` (variable) and `HF_TOKEN` (secret) on the Space. With
-neither set the Space still boots and reports no releases.
-
-## Repository layout
-
-```
-retargeting/          IK engine (from GMR) + SMPL adapters + the pipeline runner
-scripts/              pipeline stages, each standalone
-clip_explorer/        review UI (Flask API + React) and its data builders
-curation/             frozen reproducibility artifacts (clip lists, rejects, split)
-configs/              the live IK config + a field-by-field reference
-space/                HF Space container + card for the clip explorer
-docs/                 engineering report with measurements and rejected approaches
-tests/                pytest suite (skips cleanly without AMASS/SMPL-X/robot)
-```
-
-`docs/asimov_retargeting_report.md` is the long-form write-up: what was tried,
-what was measured, and what was rejected and why.
-
-## Tests
-
-```bash
-.venv/bin/python -m pytest tests/          # skips the data-dependent tests
-ASIMOV_AMASS_DIR=$AMASS .venv/bin/python -m pytest tests/    # runs everything
-```
 
 ## License
 

@@ -4,7 +4,7 @@ This is what the clip explorer Space reads. It uploads only what the UI needs:
 the per-clip JSON caches and the review MP4s — never the retargeted pkls or the
 training npz.
 
-    publish_dataset.py --root <pipeline out dir> --release v8 --repo <owner>/<name>
+    publish_dataset.py --root <pipeline out dir> --release <name> --repo <owner>/<name>
 
 The repo is created PRIVATE and must stay private: everything here derives from
 AMASS, whose license forbids redistribution. The script refuses to target a
@@ -65,7 +65,7 @@ def stage(root, release, staging, with_videos=True):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", required=True, help="pipeline --out directory")
-    ap.add_argument("--release", required=True, help="release name, e.g. v8")
+    ap.add_argument("--release", required=True, help="release name used in the dataset layout")
     ap.add_argument("--repo", required=True, help="<owner>/<name> dataset repo")
     ap.add_argument("--no-videos", action="store_true")
     ap.add_argument("--dry-run", action="store_true")

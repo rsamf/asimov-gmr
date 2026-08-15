@@ -102,6 +102,6 @@ retarget → metrics → difficulty → compile → fallen → merge → recompi
 
 ## Reproducibility artifacts
 
-`curation/` holds what makes a rerun match: `clips_v8.txt` (exact source clips),
-`rejects.json`, `test_split.json`, `expected_v8.json` (the `--verify` target).
+`curation/` holds what makes a rerun match: `clips.txt` (exact source clips),
+`rejects.json`, `test_split.json`, `expected.json` (the `--verify` target).
 These are clip *names* and thresholds — never motion data.

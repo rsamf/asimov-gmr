@@ -325,7 +325,7 @@ def main():
     # maxtasksperchild bounds per-worker RSS growth: without it a worker's memory
     # accumulates over hundreds of clips until the kernel OOM-kills it, and
     # mp.Pool silently respawns the worker while its in-flight task is LOST --
-    # imap_unordered then waits forever (the 2026-07-23 v3 deadlock at 2400/2589).
+    # imap_unordered then waits forever (observed as a hang at 2400/2589 clips).
     with mp.Pool(a.workers, maxtasksperchild=25) as pool:
         for i, r in enumerate(pool.imap_unordered(worker, tasks)):
             results.append(r)

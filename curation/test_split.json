@@ -1,7 +1,6 @@
 {
   "created": "2026-08-12",
   "seed": 0,
-  "source_release": "tune_v8",
   "per_bucket": 60,
   "sampling": "round-robin over AMASS datasets within each difficulty bucket, seeded shuffle per dataset; FROZEN \u2014 releases that drop a test clip leave a reported hole, never a top-up",
   "test": {

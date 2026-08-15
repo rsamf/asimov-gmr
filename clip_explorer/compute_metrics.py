@@ -138,7 +138,7 @@ def compute_one(pkl):
 def main():
     global DATASET, CACHE
     ap = argparse.ArgumentParser()
-    ap.add_argument("dataset", help="retargeted dataset dir (e.g. .../retargeted/tune_v5)")
+    ap.add_argument("dataset", help="retargeted dataset dir (the pkl tree)")
     ap.add_argument("--workers", type=int, default=12)
     a = ap.parse_args()
     DATASET = a.dataset

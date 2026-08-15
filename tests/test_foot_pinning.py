@@ -56,7 +56,7 @@ def test_z_pinned_with_flag_live_without():
         p = S._FootPinner(fr)
         outs = [p.pos("left_foot", np.array(l)) for l in left]
         assert outs[-1][2] <= outs[0][2] + 1e-12, "flag on -> Z holds the stance anchor"
-        S.PIN_FOOT_Z = False               # shipped default (v5 behavior)
+        S.PIN_FOOT_Z = False               # shipped default
         p = S._FootPinner(fr)
         outs = [p.pos("left_foot", np.array(l)) for l in left]
         assert outs[-1][2] == pytest.approx(left[-1][2]), "flag off -> Z tracks live"
