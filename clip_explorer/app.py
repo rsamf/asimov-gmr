@@ -419,9 +419,19 @@ def _build_manifest_ds(key, d):
 
 
 def _resolve_video(video_dir, name):
-    """Absolute path for a requested video, or None if it escapes video_dir."""
-    root = os.path.realpath(video_dir)
-    full = os.path.realpath(os.path.join(root, name))
+    """Absolute path for a requested video, or None if the request escapes video_dir.
+
+    Containment is checked on the REQUESTED path, not on its symlink target.
+    A hub-cached release materializes each video as a symlink into the blob
+    store, so resolving the target lands outside video_dir and would reject the
+    very file that was just fetched. Traversal is still blocked: absolute names
+    are refused outright, and any `..` that climbs past the root fails the
+    normalized prefix check below.
+    """
+    if os.path.isabs(name):
+        return None
+    root = os.path.abspath(video_dir)
+    full = os.path.normpath(os.path.join(root, name))
     if full != root and not full.startswith(root + os.sep):
         return None
     return full

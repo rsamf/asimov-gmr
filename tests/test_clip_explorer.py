@@ -144,6 +144,25 @@ def test_resolve_video_blocks_escapes(video_dir):
     assert clip_app._resolve_video(vd, "/etc/passwd") is None
 
 
+def test_resolve_video_allows_symlinked_cache_entries(tmp_path):
+    """Regression: a hub-cached release stores each video as a symlink into a
+    blob store. Resolving the symlink target puts it outside video_dir, which
+    previously 403'd every video after the first fetch."""
+    blob_dir = tmp_path / "blobs"
+    blob_dir.mkdir()
+    blob = blob_dir / "deadbeef"
+    blob.write_bytes(b"fake mp4 bytes")
+    vd = tmp_path / "videos"
+    (vd / "CMU" / "55").mkdir(parents=True)
+    (vd / "CMU" / "55" / "55_07_poses.mp4").symlink_to(blob)
+
+    got = clip_app._resolve_video(str(vd), "CMU/55/55_07_poses.mp4")
+    assert got is not None, "symlinked cache entry must resolve, not 403"
+    assert os.path.exists(got)
+    # traversal is still refused even though we no longer realpath
+    assert clip_app._resolve_video(str(vd), "../blobs/deadbeef") is None
+
+
 def test_clipname_from_src_parses_dataset_sub_clip():
     name, ds = clip_app._clipname_from_src(
         "/data/amass/CMU/55/55_07_poses.npz")
