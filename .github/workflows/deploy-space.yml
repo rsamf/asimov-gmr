@@ -19,16 +19,34 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # set HF_SPACE_REPO (e.g. rsamf/asimov-clip-explorer) as a repository
-    # variable, and HF_TOKEN (write scope) as a repository secret
-    if: vars.HF_SPACE_REPO != ''
     steps:
+      # The target Space may be configured as either a repository variable or a
+      # secret. It cannot be checked in a job-level `if:` because the `secrets`
+      # context is not available there, so the gate lives in this step instead.
+      - name: Resolve target
+        id: cfg
+        env:
+          SPACE_VAR: ${{ vars.HF_SPACE_REPO }}
+          SPACE_SECRET: ${{ secrets.HF_SPACE_REPO }}
+        run: |
+          SPACE="${SPACE_VAR:-$SPACE_SECRET}"
+          if [ -z "$SPACE" ]; then
+            echo "::notice::HF_SPACE_REPO is not set — skipping deploy."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.cfg.outputs.ready == 'true'
+
       - uses: actions/setup-python@v5
+        if: steps.cfg.outputs.ready == 'true'
         with:
           python-version: "3.10"
 
       - name: Stage the Space
+        if: steps.cfg.outputs.ready == 'true'
         run: |
           mkdir -p space_build
           # the Space builds the frontend itself (Dockerfile stage 1), so ship
@@ -43,16 +61,18 @@ jobs:
           cp curation/test_split.json space_build/curation/
 
       - name: Upload
+        if: steps.cfg.outputs.ready == 'true'
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          SPACE: ${{ vars.HF_SPACE_REPO }}
+          SPACE_VAR: ${{ vars.HF_SPACE_REPO }}
+          SPACE_SECRET: ${{ secrets.HF_SPACE_REPO }}
         run: |
           pip install --quiet "huggingface_hub>=0.34"
-          python - <<'PY'
+          SPACE="${SPACE_VAR:-$SPACE_SECRET}" python - <<'PY'
           import os
           from huggingface_hub import HfApi
-          api = HfApi(token=os.environ["HF_TOKEN"])
           space = os.environ["SPACE"]
+          api = HfApi(token=os.environ["HF_TOKEN"])
           api.create_repo(space, repo_type="space", space_sdk="docker",
                           exist_ok=True)
           api.upload_folder(
@@ -60,5 +80,5 @@ jobs:
               commit_message=f"deploy {os.environ.get('GITHUB_SHA', '')[:7]}",
               delete_patterns=["**"],     # keep the Space an exact mirror
           )
-          print(f"deployed -> https://huggingface.co/spaces/{space}")
+          print("deployed (Space name hidden if configured as a secret)")
           PY
