@@ -1,0 +1,113 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Self-hosted fonts (the tool must work offline): IBM Plex — an engineering
+   instrument voice. Sans for UI, Mono for every data value and clip name,
+   Condensed for the wordmark only. */
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+@import "@fontsource/ibm-plex-sans-condensed/600.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+    --font-condensed: "IBM Plex Sans Condensed", var(--font-sans);
+    --font-heading: var(--font-sans);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    /* domain colors — hue is reserved for meaning */
+    --color-marker: var(--marker);
+    --color-rec: var(--rec);
+    --color-easy: var(--easy);
+    --color-medium: var(--medium);
+    --color-hard: var(--hard);
+    --color-pass: var(--pass);
+    --color-fail: var(--fail);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* "Mocap lab instrument": dark-only (video review, long sessions). Layered
+   graphite grounds, hairline borders, warm marker-white as the *luminance*
+   accent for selection/focus, amber only for live states. Semantic hues
+   (easy/medium/hard, pass/fail) are the only other color on the page. */
+:root {
+    --background: #0f1115;
+    --foreground: #e6e8ed;
+    --card: #15181d;
+    --card-foreground: #e6e8ed;
+    --popover: #1c2027;
+    --popover-foreground: #e6e8ed;
+    --primary: #f2efe7;
+    --primary-foreground: #15181d;
+    --secondary: #1c2027;
+    --secondary-foreground: #e6e8ed;
+    --muted: #1a1e24;
+    --muted-foreground: #8a909c;
+    --accent: #232833;
+    --accent-foreground: #e6e8ed;
+    --destructive: #e0655c;
+    --border: #262b33;
+    --input: #262b33;
+    --ring: #f2efe7;
+    --radius: 0.5rem;
+    --marker: #f2efe7;
+    --rec: #e0a83c;
+    --easy: #5ca88c;
+    --medium: #e0a83c;
+    --hard: #e06c55;
+    --pass: #6fad7e;
+    --fail: #e0655c;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    }
+  body {
+    @apply bg-background text-foreground;
+    }
+  html {
+    @apply font-sans;
+    color-scheme: dark;
+    }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 5px;
+    border: 2px solid var(--background);
+    }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+    }
+}

@@ -1,0 +1,26 @@
+{
+  "release": "v8",
+  "source_clips": 3388,
+  "retarget": {
+    "ok": 3257,
+    "glitch": 130,
+    "error": 1
+  },
+  "training_set": {
+    "clips": 3221,
+    "frames": 917503,
+    "hours": 8.495,
+    "fps": 30.0
+  },
+  "difficulty": {
+    "hard": 712,
+    "medium": 1702,
+    "easy": 807
+  },
+  "split": {
+    "train": 3041,
+    "test": 180
+  },
+  "fallen_dropped": 36,
+  "tolerance": "exact; any drift means a config, curation list or source-data difference"
+}

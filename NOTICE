@@ -1,0 +1,87 @@
+Asimov GMR
+Copyright (c) 2026 Richard Franklin
+
+This product includes software developed by third parties. The notices below
+are reproduced as required by their respective licenses.
+
+===============================================================================
+General Motion Retargeting (GMR) — MIT License
+https://github.com/YanjieZe/GMR
+===============================================================================
+
+The IK retargeting engine in `retargeting/` originates from GMR and remains
+substantially unmodified in places. Files that are wholly or largely upstream:
+
+  retargeting/motion_retarget.py    upstream, with asimov-specific additions
+  retargeting/kinematics_model.py   upstream, unmodified
+  retargeting/utils/smpl.py         upstream base; the SMPL+H AMASS adapter,
+                                    measured-height scaling and per-dataset
+                                    framerate overrides are this project's
+  retargeting/__init__.py           upstream re-export surface
+  retargeting/params.py             rewritten for asimov; registry API is
+                                    upstream's
+
+Original notice:
+
+  Copyright 2025 Yanjieze
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to
+  deal in the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+  sell copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+  DEALINGS IN THE SOFTWARE.
+
+===============================================================================
+NVIDIA Corporation — BSD 3-Clause License
+===============================================================================
+
+`retargeting/torch_utils.py` is Copyright (c) 2018-2022, NVIDIA Corporation
+(originally from the IsaacGym `poselib` utilities). Its full BSD 3-Clause
+notice is retained verbatim in the file header and must remain there.
+
+===============================================================================
+shadcn/ui and Radix UI — MIT License
+===============================================================================
+
+`clip_explorer/frontend/src/components/ui/*` are shadcn/ui components
+(MIT, https://ui.shadcn.com), built on Radix UI primitives (MIT,
+https://www.radix-ui.com). They are distributed by design as source copied
+into the consuming project.
+
+===============================================================================
+imageio-ffmpeg
+===============================================================================
+
+Video rendering uses `imageio-ffmpeg`, which ships prebuilt FFmpeg binaries
+licensed under the LGPL-2.1-or-later (some builds GPL). FFmpeg is not
+distributed in this repository; it is fetched by pip at install time.
+
+===============================================================================
+Removed third-party code
+===============================================================================
+
+Earlier versions of the upstream project vendored Ubisoft LAFAN1 utilities
+under CC BY-NC-ND 4.0. That code has been removed from this project in full;
+the single quaternion-product call that used it is now
+`retargeting/utils/quat.py`, written for this project. No CC BY-NC-ND code
+remains, and none of this repository is subject to those terms.
+
+===============================================================================
+Data and model terms (not distributed here — see THIRD_PARTY.md)
+===============================================================================
+
+AMASS motion data, SMPL-X body models, and the `smplx` package each carry
+non-commercial research licenses. None of them are redistributed by this
+repository; users obtain them directly and accept those terms themselves.
