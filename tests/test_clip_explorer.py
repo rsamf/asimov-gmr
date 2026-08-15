@@ -309,3 +309,47 @@ def test_assets_served_with_immutable_cache(tmp_path, monkeypatch):
     assert r.status_code == 200
     assert "max-age=31536000" in r.headers.get("Cache-Control", "")
 
+
+
+# ---- release caching + video index (Space-facing behaviour) ----
+
+def test_api_caches_until_inputs_change(tmp_path, monkeypatch):
+    """A repeat request must not re-parse the manifest, but an edit must show."""
+    man = {"summary": {}, "clips": [
+        {"src": "/data/amass/CMU/55/55_07_poses.npz", "status": "ok",
+         "overall_sat": 1.0, "ankle_roll_sat": 0.0, "peak_vel": 1.0,
+         "glitch": False, "frames": 90, "duration_s": 3.0}]}
+    mpath = tmp_path / "manifest.json"
+    mpath.write_text(json.dumps(man))
+    _register(monkeypatch, manifest=str(mpath), metrics=str(tmp_path / "none.json"),
+              difficulty=str(tmp_path / "none.json"), video_dir=str(tmp_path))
+    # identity holds at the builder (the API re-serializes, so compare there)
+    first = clip_app.build_manifest_ds("test")
+    assert clip_app.build_manifest_ds("test") is first      # served from cache
+
+    man["clips"][0]["overall_sat"] = 42.0
+    mpath.write_text(json.dumps(man))
+    os.utime(mpath, (0, 0))                    # force a distinct mtime
+    fresh = clip_app.build_manifest_ds("test")
+    assert fresh is not first and fresh[0]["sat"] == 42.0   # invalidated by the edit
+    assert clip_app.app.test_client().get(
+        "/api/clips?dataset=test").get_json()["clips"][0]["sat"] == 42.0
+
+
+def test_video_index_avoids_stat_and_reports_availability(tmp_path, monkeypatch):
+    vd = tmp_path / "vid"
+    vd.mkdir()
+    rel = "CMU/55/55_07_poses.mp4"
+    (vd / "index.json").write_text(json.dumps([rel]))
+    # index is authoritative: the file itself need not be on local disk (the
+    # Space fetches it lazily), and a clip absent from the index reads as absent
+    assert clip_app._has_video(str(vd), rel) is True
+    assert clip_app._has_video(str(vd), "CMU/55/nope.mp4") is False
+
+
+def test_has_video_falls_back_to_stat_without_an_index(tmp_path):
+    vd = tmp_path / "vid"
+    (vd / "CMU" / "55").mkdir(parents=True)
+    (vd / "CMU" / "55" / "55_07_poses.mp4").write_bytes(b"x")
+    assert clip_app._has_video(str(vd), "CMU/55/55_07_poses.mp4") is True
+    assert clip_app._has_video(str(vd), "CMU/55/nope.mp4") is False

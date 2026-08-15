@@ -1,0 +1,64 @@
+name: Deploy clip explorer to HF Space
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "clip_explorer/**"
+      - "retargeting/utils/clip_names.py"
+      - "curation/test_split.json"
+      - "space/**"
+      - ".github/workflows/deploy-space.yml"
+  workflow_dispatch:
+
+# never let two deploys race the same Space
+concurrency:
+  group: hf-space
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # set HF_SPACE_REPO (e.g. rsamf/asimov-clip-explorer) as a repository
+    # variable, and HF_TOKEN (write scope) as a repository secret
+    if: vars.HF_SPACE_REPO != ''
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Stage the Space
+        run: |
+          mkdir -p space_build
+          # the Space builds the frontend itself (Dockerfile stage 1), so ship
+          # sources, not a prebuilt bundle
+          cp space/Dockerfile space/README.md space_build/
+          mkdir -p space_build/clip_explorer space_build/retargeting/utils space_build/curation
+          cp clip_explorer/app.py clip_explorer/hf_data.py space_build/clip_explorer/
+          cp -r clip_explorer/frontend space_build/clip_explorer/frontend
+          rm -rf space_build/clip_explorer/frontend/node_modules \
+                 space_build/clip_explorer/frontend/dist
+          cp retargeting/utils/clip_names.py space_build/retargeting/utils/
+          cp curation/test_split.json space_build/curation/
+
+      - name: Upload
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          SPACE: ${{ vars.HF_SPACE_REPO }}
+        run: |
+          pip install --quiet "huggingface_hub>=0.34"
+          python - <<'PY'
+          import os
+          from huggingface_hub import HfApi
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          space = os.environ["SPACE"]
+          api.create_repo(space, repo_type="space", space_sdk="docker",
+                          exist_ok=True)
+          api.upload_folder(
+              repo_id=space, repo_type="space", folder_path="space_build",
+              commit_message=f"deploy {os.environ.get('GITHUB_SHA', '')[:7]}",
+              delete_patterns=["**"],     # keep the Space an exact mirror
+          )
+          print(f"deployed -> https://huggingface.co/spaces/{space}")
+          PY

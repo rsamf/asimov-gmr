@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+      - name: Install
+        run: pip install -e ".[dev]"
+      # AMASS, SMPL-X and the robot description are not redistributable, so CI
+      # exercises everything that does not need them; those tests skip.
+      - name: Tests
+        run: pytest tests/ -q
+      - name: No machine-specific paths
+        run: |
+          if grep -rnE '/home/[a-z]+/|/mnt/shared|/media/' \
+               --include='*.py' --include='*.toml' . \
+               | grep -vE '\.git/|node_modules'; then
+            echo "::error::absolute machine paths must not be committed"
+            exit 1
+          fi
+      - name: Licence notices present
+        run: |
+          test -s LICENSE && test -s NOTICE && test -s THIRD_PARTY.md
+          grep -q "Yanjieze" NOTICE          # upstream GMR notice (MIT requires it)
+          grep -q "NVIDIA" NOTICE            # torch_utils.py is BSD-3
+          ! grep -rq "lafan_vendor" retargeting/   # CC BY-NC-ND must stay out
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: clip_explorer/frontend/package-lock.json
+      - run: npm ci
+        working-directory: clip_explorer/frontend
+      - run: npm run build          # tsc -b runs here, so type errors fail CI
+        working-directory: clip_explorer/frontend

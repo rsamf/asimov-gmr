@@ -18,6 +18,7 @@ import glob
 import json
 import os
 import re
+import sys
 
 from flask import Flask, abort, jsonify, request, send_file, send_from_directory
 
@@ -26,6 +27,12 @@ from retargeting.utils.clip_names import amass_rel, clip_name_to_rel, read_clip_
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 
+# app.py is loaded both as a script and by path (tests), so make its own
+# directory importable before pulling in the sibling module
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+import hf_data  # noqa: E402
+
 # Data root holding the releases to browse, laid out as
 #   <root>/asimov/retargeted/tune_<name>/   (manifest + metric caches)
 #   <root>/asimov/motions_train/tune_<name>/
@@ -33,7 +40,9 @@ REPO = os.path.dirname(HERE)
 # Defaults to the pipeline's own output dir, so `asimov-gmr run --out out` then
 # `python clip_explorer/app.py` just works. Point ROBOTICS_ROOT elsewhere to
 # browse a shared corpus.
-ROBO = os.environ.get("ROBOTICS_ROOT") or os.path.join(REPO, "out")
+ROBO = (hf_data.bootstrap() if hf_data.enabled()
+        else os.environ.get("ROBOTICS_ROOT") or os.path.join(REPO, "out"))
+DATA_ROOT = ROBO
 
 # Per-clip performance of the trained policy (dropped in by the training run),
 # keyed by clip_name; joined into BOTH datasets so success/MPKPE are browsable
@@ -247,7 +256,32 @@ def load_success(path):
     return {r["clip"]: r["label"] for r in csv.DictReader(open(path)) if r.get("label")}
 
 
+def _video_index(video_dir):
+    """Set of video paths available for a release, or None to stat per clip.
+
+    A release may ship `index.json` (a flat list of relative mp4 paths) next to
+    its videos. Reading one file beats ~3.4k stat() calls per request, and it is
+    the only workable option when the videos live in a remote repo that is
+    fetched lazily.
+    """
+    idx = os.path.join(video_dir, "index.json")
+    try:
+        mt = os.path.getmtime(idx)
+    except OSError:
+        return None
+    hit = _VIDEO_INDEX.get(video_dir)
+    if not hit or hit[0] != mt:
+        _VIDEO_INDEX[video_dir] = (mt, set(json.load(open(idx))))
+    return _VIDEO_INDEX[video_dir][1]
+
+
+_VIDEO_INDEX = {}
+
+
 def _has_video(video_dir, rel):
+    idx = _video_index(video_dir)
+    if idx is not None:
+        return rel in idx
     return os.path.exists(os.path.join(video_dir, rel))
 
 
@@ -287,9 +321,44 @@ def _removed_sets(d):
             "fallen": _reject_names(d.get("fallen_drop"))}
 
 
+_CACHE = {}
+
+
+def _cache_key(d):
+    """Identity of a release's inputs: paths plus their mtimes.
+
+    Keying on mtime means a rebuilt release (or a test pointing the registry at
+    a different directory) invalidates automatically, while repeat requests skip
+    re-parsing several MB of JSON — which matters when the data root is a
+    network-backed snapshot rather than local disk.
+    """
+    parts = []
+    for k in ("manifest", "metrics", "difficulty", "train_summary",
+              "human_rejects", "fallen_drop", "train_csv", "success_csv"):
+        p = d.get(k)
+        if p:
+            try:
+                parts.append((p, os.path.getmtime(p)))
+            except OSError:
+                parts.append((p, None))
+    p = TEST_SPLIT_PATH
+    parts.append((p, os.path.getmtime(p) if os.path.exists(p) else None))
+    return tuple(parts)
+
+
 def build_manifest_ds(key):
-    """Join a manifest dataset (v2/v3) with its precomputed metrics cache."""
+    """Join a release's manifest with its metric caches and training drop-ins."""
     d = DATASETS[key]
+    ck = _cache_key(d)
+    hit = _CACHE.get(key)
+    if hit and hit[0] == ck:
+        return hit[1]
+    rows = _build_manifest_ds(key, d)
+    _CACHE[key] = (ck, rows)
+    return rows
+
+
+def _build_manifest_ds(key, d):
     if not os.path.exists(d["manifest"]):
         return []
     clips = json.load(open(d["manifest"]))["clips"]
@@ -419,8 +488,14 @@ def video(dataset, name):
     if d is None:
         abort(404)
     full = _resolve_video(d["video_dir"], name)
-    if full is None:
+    if full is None:                       # escaped the video dir
         abort(403)
+    if not os.path.exists(full) and hf_data.enabled():
+        # videos are not part of the metadata snapshot; pull this one on demand
+        rel = os.path.relpath(full, DATA_ROOT) if full.startswith(DATA_ROOT) else None
+        cached = hf_data.fetch_video(rel) if rel else None
+        if cached:
+            return send_file(cached, mimetype="video/mp4", conditional=True)
     if not os.path.exists(full):
         abort(404)
     return send_file(full, mimetype="video/mp4", conditional=True)  # range support

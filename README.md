@@ -189,6 +189,23 @@ histogram-brush filters, multi-sort, shareable URL state, video playback, and a
 
 ---
 
+## Deploying the explorer
+
+The explorer ships as a HuggingFace Docker Space, deployed by CI on every push
+to `main` (`.github/workflows/deploy-space.yml`; set the `HF_SPACE_REPO`
+repository variable and an `HF_TOKEN` secret).
+
+Because the clips derive from AMASS, the **app is public but the data is not**:
+the Space reads a private dataset repo using its own token.
+
+```bash
+# publish a release's metadata + review videos to a PRIVATE dataset repo
+python scripts/publish_dataset.py --root ./out --release v8 --repo <owner>/<name>
+```
+
+Then set `HF_DATASET_REPO` (variable) and `HF_TOKEN` (secret) on the Space. With
+neither set the Space still boots and reports no releases.
+
 ## Repository layout
 
 ```
@@ -197,6 +214,7 @@ scripts/              pipeline stages, each standalone
 clip_explorer/        review UI (Flask API + React) and its data builders
 curation/             frozen reproducibility artifacts (clip lists, rejects, split)
 configs/              the live IK config + a field-by-field reference
+space/                HF Space container + card for the clip explorer
 docs/                 engineering report with measurements and rejected approaches
 tests/                pytest suite (skips cleanly without AMASS/SMPL-X/robot)
 ```
