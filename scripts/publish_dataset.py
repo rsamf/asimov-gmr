@@ -20,6 +20,26 @@ METADATA = ["manifest.json", "clip_metrics.json", "clip_difficulty.json",
             "fallen_drop.json"]
 
 
+def _link_or_copy(src, dst):
+    """Materialize `src` at `dst` as cheaply as the filesystem allows.
+
+    A hardlink costs nothing, but fails across devices (EXDEV) — which is the
+    normal case when the videos live on a data mount and staging is under /tmp.
+    Fall back to a symlink (the uploader reads through it), then to a real copy.
+    """
+    import shutil
+    try:
+        os.link(src, dst)
+        return
+    except OSError:
+        pass
+    try:
+        os.symlink(os.path.abspath(src), dst)
+        return
+    except OSError:
+        shutil.copy2(src, dst)
+
+
 def stage(root, release, staging, with_videos=True):
     """Assemble the layout the explorer expects, under `staging`."""
     import shutil
@@ -54,7 +74,7 @@ def stage(root, release, staging, with_videos=True):
                 out = os.path.join(dst_vid, rel)
                 os.makedirs(os.path.dirname(out), exist_ok=True)
                 if not os.path.exists(out):
-                    os.link(full, out)          # hardlink: no second copy on disk
+                    _link_or_copy(full, out)
                 index.append(rel)
                 n_vid += 1
         # the Space reads this instead of stat-ing every clip over the network
